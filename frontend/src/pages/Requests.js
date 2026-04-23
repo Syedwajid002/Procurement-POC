@@ -2,42 +2,70 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
 
+const statusConfig = {
+  pending: { bg: 'bg-amber-100 text-amber-700', label: 'Pending' },
+  store_review: { bg: 'bg-sky-100 text-sky-700', label: 'Store Review' },
+  approved: { bg: 'bg-emerald-100 text-emerald-700', label: 'Approved' },
+  rejected: { bg: 'bg-rose-100 text-rose-700', label: 'Rejected' },
+  rfq_created: { bg: 'bg-indigo-100 text-indigo-700', label: 'RFQ Created' },
+  quoted: { bg: 'bg-purple-100 text-purple-700', label: 'Quoted' },
+  awarded: { bg: 'bg-teal-100 text-teal-700', label: 'Awarded' },
+};
+
 export default function Requests() {
   const [requests, setRequests] = useState([]);
-
-  useEffect(() => { api.get('/requests').then(r => setRequests(r.data)); }, []);
-
-  const statusColor = { pending: '#ecc94b', approved: '#48bb78', rejected: '#f56565', rfq_created: '#4299e1', quoted: '#9f7aea', awarded: '#38b2ac' };
+  const [loading, setLoading] = useState(true);
+  useEffect(() => { api.get('/requests').then(r => setRequests(r.data)).finally(() => setLoading(false)); }, []);
 
   return (
     <div>
-      <h2>Requests</h2>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ background: '#f7fafc', textAlign: 'left' }}>
-            <th style={{ padding: 8, borderBottom: '2px solid #e2e8f0' }}>ID</th>
-            <th style={{ padding: 8, borderBottom: '2px solid #e2e8f0' }}>Created By</th>
-            <th style={{ padding: 8, borderBottom: '2px solid #e2e8f0' }}>Site/Project</th>
-            <th style={{ padding: 8, borderBottom: '2px solid #e2e8f0' }}>Priority</th>
-            <th style={{ padding: 8, borderBottom: '2px solid #e2e8f0' }}>Status</th>
-            <th style={{ padding: 8, borderBottom: '2px solid #e2e8f0' }}>Date</th>
-            <th style={{ padding: 8, borderBottom: '2px solid #e2e8f0' }}>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {requests.map(r => (
-            <tr key={r.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-              <td style={{ padding: 8 }}>#{r.id}</td>
-              <td style={{ padding: 8 }}>{r.created_by_name}</td>
-              <td style={{ padding: 8 }}>{r.site_project || '-'}</td>
-              <td style={{ padding: 8 }}><span style={{ color: r.priority === 'urgent' ? 'red' : 'inherit' }}>{r.priority}</span></td>
-              <td style={{ padding: 8 }}><span style={{ background: statusColor[r.status] || '#ccc', color: '#fff', padding: '2px 8px', borderRadius: 4, fontSize: 12 }}>{r.status}</span></td>
-              <td style={{ padding: 8 }}>{new Date(r.created_at).toLocaleDateString()}</td>
-              <td style={{ padding: 8 }}><Link to={`/requests/${r.id}`}>View</Link></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">Requests</h2>
+          <p className="text-slate-500 text-sm mt-1">{requests.length} total requests</p>
+        </div>
+      </div>
+      <div className="card overflow-hidden">
+        {loading ? (
+          <div className="p-12 text-center text-slate-400">Loading requests...</div>
+        ) : requests.length === 0 ? (
+          <div className="p-12 text-center text-slate-400">No requests found</div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="table-header">ID</th>
+                <th className="table-header">Created By</th>
+                <th className="table-header">Site / Project</th>
+                <th className="table-header">Priority</th>
+                <th className="table-header">Status</th>
+                <th className="table-header">Date</th>
+                <th className="table-header"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {requests.map(r => {
+                const sc = statusConfig[r.status] || { bg: 'bg-slate-100 text-slate-600', label: r.status };
+                return (
+                  <tr key={r.id} className="hover:bg-slate-50/50 transition">
+                    <td className="table-cell font-medium">#{r.id}</td>
+                    <td className="table-cell">{r.created_by_name}</td>
+                    <td className="table-cell">{r.site_project || <span className="text-slate-400">—</span>}</td>
+                    <td className="table-cell">
+                      {r.priority === 'urgent'
+                        ? <span className="badge bg-rose-100 text-rose-700">🔴 Urgent</span>
+                        : <span className="text-slate-500">Normal</span>}
+                    </td>
+                    <td className="table-cell"><span className={`badge ${sc.bg}`}>{sc.label}</span></td>
+                    <td className="table-cell text-slate-500">{new Date(r.created_at).toLocaleDateString()}</td>
+                    <td className="table-cell"><Link to={`/requests/${r.id}`} className="text-indigo-600 hover:text-indigo-800 font-medium text-sm">View →</Link></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }

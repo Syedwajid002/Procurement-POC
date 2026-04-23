@@ -25,6 +25,14 @@ export function AuthProvider({ children }) {
 
   const logout = () => { localStorage.clear(); setUser(null); };
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center' }}>Loading...</div>;
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="text-center">
+        <div className="w-10 h-10 bg-indigo-600 rounded-xl mx-auto mb-3 animate-pulse"></div>
+        <p className="text-slate-400 text-sm">Loading...</p>
+      </div>
+    </div>
+  );
+
   return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>;
 }
